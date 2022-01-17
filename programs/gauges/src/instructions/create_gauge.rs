@@ -1,25 +1,25 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 
-use crate::state::{CreatePairBumps, Pair};
+use crate::state::{CreateGaugeBumps, Gauge};
 
 #[derive(Accounts)]
-#[instruction(bumps: CreatePairBumps)]
-pub struct CreatePair<'info> {
-    /// The pair
+#[instruction(bumps: CreateGaugeBumps)]
+pub struct CreateGauge<'info> {
+    /// The gauge
     #[account(
         init,
         payer = creator,
         seeds = [
-            b"pair",
+            b"gauge",
             mint_a.key().as_ref(),
             mint_b.key().as_ref(),
         ],
-        bump = bumps.pair
+        bump = bumps.gauge
     )]
-    pub pair: Box<Account<'info, Pair>>,
+    pub gauge: Box<Account<'info, Gauge>>,
 
-    /// The pair authority
+    /// The gauge authority
     #[account(
         mut,
         seeds = [
@@ -44,7 +44,7 @@ pub struct CreatePair<'info> {
         mint::decimals = 9,
         mint::authority = authority
     )]
-    pub pair_mint: Box<Account<'info, Mint>>,
+    pub gauge_mint: Box<Account<'info, Mint>>,
 
     /// The mint of the token A
     pub mint_a: AccountInfo<'info>,
@@ -52,7 +52,7 @@ pub struct CreatePair<'info> {
     /// The mint of the token B
     pub mint_b: AccountInfo<'info>,
 
-    /// The pair account holding token A
+    /// The gauge account holding token A
     #[account(
         init,
         payer = creator,
@@ -65,9 +65,9 @@ pub struct CreatePair<'info> {
         token::mint = mint_a,
         token::authority = authority
     )]
-    pub pair_account_a: Box<Account<'info, TokenAccount>>,
+    pub gauge_account_a: Box<Account<'info, TokenAccount>>,
 
-    /// The pair account holding token B
+    /// The gauge account holding token B
     #[account(
         init,
         payer = creator,
@@ -80,39 +80,9 @@ pub struct CreatePair<'info> {
         token::mint = mint_b,
         token::authority = authority
     )]
-    pub pair_account_b: Box<Account<'info, TokenAccount>>,
+    pub gauge_account_b: Box<Account<'info, TokenAccount>>,
 
-    /// The account holding fees on token A
-    #[account(
-        init,
-        payer = creator,
-        seeds = [
-            b"fees_a",
-            mint_a.key().as_ref(),
-            mint_b.key().as_ref()
-        ],
-        bump = bumps.fees_a,
-        token::mint = mint_a,
-        token::authority = authority
-    )]
-    pub fees_account_a: Account<'info, TokenAccount>,
-
-    /// The account holding fees on token B
-    #[account(
-        init,
-        payer = creator,
-        seeds = [
-            b"fees_b",
-            mint_a.key().as_ref(),
-            mint_b.key().as_ref()
-        ],
-        bump = bumps.fees_b,
-        token::mint = mint_b,
-        token::authority = authority
-    )]
-    pub fees_account_b: Box<Account<'info, TokenAccount>>,
-
-    /// The creator of the pool
+    /// The creator of the gauge
     #[account(mut)]
     pub creator: Signer<'info>,
 
@@ -124,16 +94,15 @@ pub struct CreatePair<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<CreatePair>, bumps: CreatePairBumps, stable: bool) -> ProgramResult {
-    let pair = &mut ctx.accounts.pair;
-    pair.mint_a = ctx.accounts.mint_a.key();
-    pair.mint_b = ctx.accounts.mint_b.key();
-    pair.stable = stable;
-    pair.pair_mint = ctx.accounts.pair_mint.key();
-    pair.authority = ctx.accounts.authority.key();
-    pair.bumps = bumps;
+pub fn handler(ctx: Context<CreateGauge>, bumps: CreateGaugeBumps) -> ProgramResult {
+    let gauge = &mut ctx.accounts.gauge;
+    gauge.mint_a = ctx.accounts.mint_a.key();
+    gauge.mint_b = ctx.accounts.mint_b.key();
+    gauge.pair_mint = ctx.accounts.gauge_mint.key();
+    gauge.authority = ctx.accounts.authority.key();
+    gauge.bumps = bumps;
 
-    msg!("Created pair for token A={} and B={}", pair.mint_a, pair.mint_b);
+    msg!("Created gauge for token A={} and B={}", gauge.mint_a, gauge.mint_b);
 
     Ok(())
 }

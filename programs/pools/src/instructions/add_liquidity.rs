@@ -78,7 +78,7 @@ pub struct AddLiquidity<'info> {
         ],
         bump = pair.bumps.account_a,
     )]
-    pub pair_account_a: Account<'info, TokenAccount>,
+    pub pair_account_a: Box<Account<'info, TokenAccount>>,
 
     /// The pair account holding token B
     #[account(
