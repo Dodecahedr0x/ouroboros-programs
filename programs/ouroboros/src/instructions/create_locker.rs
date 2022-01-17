@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, MintTo};
+use anchor_spl::associated_token;
+use anchor_spl::associated_token::AssociatedToken;
 
 use crate::state::{CreateLockerBumps, Locker, Ouroboros};
 
@@ -41,14 +43,7 @@ pub struct CreateLocker<'info> {
 
     /// The owner of the native tokens
     #[account(mut)]
-    pub holder: AccountInfo<'info>,
-
-    /// The owner of the native tokens
-    #[account(
-        mut,
-        constraint = holder_account.owner == holder.key()
-    )]
-    pub holder_account: Account<'info, TokenAccount>,
+    pub owner: Signer<'info>,
 
     /// The locker
     #[account(
@@ -58,7 +53,7 @@ pub struct CreateLocker<'info> {
             id.as_ref()
         ],
         bump = bumps.locker,
-        payer = holder
+        payer = owner
     )]
     pub locker: Account<'info, Locker>,
 
@@ -72,20 +67,22 @@ pub struct CreateLocker<'info> {
         bump = bumps.locker,
         payer = authority,
         mint::decimals = 0,
-        mint::authority = holder,
+        mint::authority = authority,
     )]
     pub receipt: Account<'info, Mint>,
 
-    /// The account that will the receipt
+    /// The account that will hold the receipt
     #[account(
-        mut,
-        constraint = receipt_account.owner == holder.key()
+        init_if_needed,
+        payer = owner,
+        associated_token::mint = native_mint,
+        associated_token::authority = owner,
     )]
     pub receipt_account: Account<'info, TokenAccount>,
 
-    /// The wallet creating the Ouroboros
-    #[account(mut)]
-    pub creator: Signer<'info>,
+    /// The program for interacting with the associated tokens.
+    #[account(address = associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
 
     /// The program for interacting with the token.
     #[account(address = token::ID)]

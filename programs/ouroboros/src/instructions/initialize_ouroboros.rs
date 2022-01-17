@@ -1,5 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
+use anchor_spl::{
+    associated_token::{self, AssociatedToken},
+    token::{self, Mint, MintTo, Token, TokenAccount},
+};
 
 use crate::state::{InitializeOuroborosBumps, Ouroboros};
 
@@ -57,21 +60,23 @@ pub struct InitializeOuroboros<'info> {
     )]
     pub locked_mint: Account<'info, Mint>,
 
-    /// The account that will receive the initial supply
-    #[account(
-        init,
-        payer = creator,
-        token::mint = native_mint,
-        token::authority = creator,
-        constraint = creator_account.owner == creator.key()
-    )]
-    pub creator_account: Account<'info, TokenAccount>,
-
     /// The wallet creating the Ouroboros
     #[account(mut)]
     pub creator: Signer<'info>,
 
-    /// The program for interacting with the token.
+    /// The account that will receive the initial supply
+    #[account(
+        init_if_needed,
+        payer = creator,
+        associated_token::mint = native_mint,
+        associated_token::authority = creator,
+    )]
+    pub creator_account: Account<'info, TokenAccount>,
+
+    #[account(address = associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+
+    /// The program for interacting with tokens.
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
 
@@ -98,7 +103,7 @@ pub fn handler(
     ouroboros_id: u64,
     initial_supply: u64,
     base_weekly_emissions: u64,
-    time_multiplier: u64
+    time_multiplier: u64,
 ) -> ProgramResult {
     let ouroboros = &mut ctx.accounts.ouroboros;
     ouroboros.id = ouroboros_id;
@@ -117,7 +122,10 @@ pub fn handler(
     ];
     let signer = &[&seeds[..]];
 
-    token::mint_to(ctx.accounts.mint_to_context().with_signer(signer), initial_supply)?;
+    token::mint_to(
+        ctx.accounts.mint_to_context().with_signer(signer),
+        initial_supply,
+    )?;
 
     msg!("Ouroboros initialized");
 

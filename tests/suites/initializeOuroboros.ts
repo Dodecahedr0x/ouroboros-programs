@@ -43,15 +43,15 @@ export const testInitializeOuroboros = (provider: Provider) =>
           [Buffer.from("ouroboros"), id.toBuffer("le", 8)],
           program.programId
         );
-      const [authority, authorityBump] = await PublicKey.findProgramAddress(
+      const [authorityAddress, authorityBump] = await PublicKey.findProgramAddress(
         [Buffer.from("authority"), id.toBuffer("le", 8)],
         program.programId
       );
-      const [nativeMint, nativeMintBump] = await PublicKey.findProgramAddress(
+      const [nativeMintAddress, nativeMintBump] = await PublicKey.findProgramAddress(
         [Buffer.from("native"), id.toBuffer("le", 8)],
         program.programId
       );
-      const [lockedMint, lockedMintBump] = await PublicKey.findProgramAddress(
+      const [lockedMintAddress, lockedMintBump] = await PublicKey.findProgramAddress(
         [Buffer.from("locked"), id.toBuffer("le", 8)],
         program.programId
       );
@@ -66,7 +66,7 @@ export const testInitializeOuroboros = (provider: Provider) =>
       const creatorAccount = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        nativeMint,
+        nativeMintAddress,
         creator.publicKey
       );
 
@@ -79,11 +79,12 @@ export const testInitializeOuroboros = (provider: Provider) =>
         {
           accounts: {
             ouroboros: ouroborosAddress,
-            authority: authority,
-            nativeMint: nativeMint,
-            lockedMint: lockedMint,
+            authority: authorityAddress,
+            nativeMint: nativeMintAddress,
+            lockedMint: lockedMintAddress,
             creator: creator.publicKey,
             creatorAccount: creatorAccount,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
@@ -93,14 +94,12 @@ export const testInitializeOuroboros = (provider: Provider) =>
       );
 
       const o = await program.account.ouroboros.fetch(ouroborosAddress);
-      console.log(o)
 
-      // expect(s.owner.toString()).to.equal(owner.publicKey.toString());
-      // expect(s.key.toString()).to.equal(lotteryKey.toString());
-      // expect(s.mint.toString()).to.equal(mintRewards.publicKey.toString());
-      // expect(s.escrow.toString()).to.equal(escrow.toString());
-      // expect(s.mint.toString()).to.equal(mintRewards.publicKey.toString());
-      // expect(s.period.toString()).to.equal(period.toString());
-      // expect(s.treasury.toString()).to.equal(treasury.toString());
+      expect(o.id.toString()).to.equal(id.toString());
+      expect(o.authority.toString()).to.equal(authorityAddress.toString());
+      expect(o.nativeMint.toString()).to.equal(nativeMintAddress.toString());
+      expect(o.lockedMint.toString()).to.equal(lockedMintAddress.toString());
+      expect(o.baseEmissions.toString()).to.equal(baseRewards.toString());
+      expect(o.timeMultiplier.toString()).to.equal(timeMultiplier.toString());
     });
   });

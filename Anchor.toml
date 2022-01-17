@@ -1,5 +1,6 @@
 [programs.localnet]
 ouroboros = "3MVR32fVYfnzR1VK8nmUE6XqAVvQy2N2dcHToeB8r78p"
+pools = "EL5LsNHBPaaoUJ2LmRuTpCmKPHw1jHLfiKCufTAmqYvh"
 
 [registry]
 url = "https://anchor.projectserum.com"

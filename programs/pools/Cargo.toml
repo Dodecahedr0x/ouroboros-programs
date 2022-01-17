@@ -1,22 +1,23 @@
 [package]
-name = "ouroboros"
+name = "pools"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "ouroboros"
+name = "pools"
 
 [features]
 no-entrypoint = []
 no-idl = []
-devnet = ["anchor-spl/devnet"]
+no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
 solana-program = "1.9.2"
+spl-math = { version = "0.1.0", features = ["no-entrypoint"] }
 anchor-lang = "0.20.1"
 anchor-spl = "0.20.1"
 thiserror = "1.0.30"

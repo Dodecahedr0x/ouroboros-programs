@@ -23,7 +23,9 @@ This results in the following properties:
 - Locked holders earn half of all token emission to prevent dilution.
 - Liquidity providers earn 100% of trading fees on unincentivized pools
 
-### Accounts
+__Pools can only be used with 9 decimals token!__
+
+## Accounts
 
 This section describes the different accounts used by the programs
 
