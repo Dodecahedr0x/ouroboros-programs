@@ -42,7 +42,7 @@ pub struct CreateLocker<'info> {
             id.as_ref()
         ],
         bump = bumps.locker,
-        payer = owner
+        payer = creator
     )]
     pub locker: Box<Account<'info, Locker>>,
 
@@ -54,7 +54,7 @@ pub struct CreateLocker<'info> {
             id.as_ref()
         ],
         bump = bumps.account,
-        payer = owner,
+        payer = creator,
         token::mint = native_mint,
         token::authority = authority
     )]
@@ -62,16 +62,16 @@ pub struct CreateLocker<'info> {
 
     /// The owner of the native tokens
     #[account(mut)]
-    pub owner: Signer<'info>,
+    pub creator: Signer<'info>,
 
     /// The owner account for native tokens
     #[account(
         init_if_needed,
-        payer = owner,
+        payer = creator,
         associated_token::mint = native_mint,
-        associated_token::authority = owner,
+        associated_token::authority = creator,
     )]
-    pub owner_account: Box<Account<'info, TokenAccount>>,
+    pub creator_account: Box<Account<'info, TokenAccount>>,
 
     /// The receipt NFT used to redeem the locker
     #[account(
@@ -81,7 +81,7 @@ pub struct CreateLocker<'info> {
             id.as_ref()
         ],
         bump = bumps.receipt,
-        payer = owner,
+        payer = creator,
         mint::decimals = 0,
         mint::authority = authority
     )]
@@ -90,9 +90,9 @@ pub struct CreateLocker<'info> {
     /// The account that will hold the receipt
     #[account(
         init_if_needed,
-        payer = owner,
+        payer = creator,
         associated_token::mint = receipt,
-        associated_token::authority = owner,
+        associated_token::authority = creator,
     )]
     pub receipt_account: Box<Account<'info, TokenAccount>>,
 
@@ -125,15 +125,21 @@ impl<'info> CreateLocker<'info> {
         CpiContext::new(
             self.token_program.to_account_info(),
             Transfer {
-                from: self.owner_account.to_account_info(),
+                from: self.creator_account.to_account_info(),
                 to: self.locker_account.to_account_info(),
-                authority: self.owner.to_account_info(),
+                authority: self.creator.to_account_info(),
             },
         )
     }
 }
 
-pub fn handler(ctx: Context<CreateLocker>, bumps: CreateLockerBumps, id: Pubkey, amount: u64, period: u64) -> ProgramResult {
+pub fn handler(
+    ctx: Context<CreateLocker>,
+    bumps: CreateLockerBumps,
+    id: Pubkey,
+    amount: u64,
+    period: u64,
+) -> ProgramResult {
     let ouroboros = &ctx.accounts.ouroboros;
     let locker = &mut ctx.accounts.locker;
     locker.id = id;
@@ -142,8 +148,6 @@ pub fn handler(ctx: Context<CreateLocker>, bumps: CreateLockerBumps, id: Pubkey,
     locker.votes = amount * period * ouroboros.time_multiplier / 604800 / 10000;
     locker.unlock_timestamp = ctx.accounts.clock.unix_timestamp + period as i64;
     locker.bumps = bumps;
-
-    msg!("Init {}", amount);
 
     let id_seed = ouroboros.id.to_le_bytes();
     let seeds = &[

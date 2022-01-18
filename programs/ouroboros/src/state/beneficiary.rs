@@ -8,7 +8,7 @@ pub struct Beneficiary {
     pub account: Pubkey,
 
     /// The number of staked tokens voting for this beneficiary
-    pub votes: u16,
+    pub votes: u64,
 
     /// The proportion of incentives this account receives (BP)
     pub weight: u16,
