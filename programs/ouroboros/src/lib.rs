@@ -39,11 +39,15 @@ mod ouroboros {
         ctx: Context<CreateLocker>,
         bumps: CreateLockerBumps,
         id: Pubkey,
+        amount: u64,
+        period: u64
     ) -> ProgramResult {
         instructions::create_locker::handler(
             ctx,
             bumps,
             id,
+            amount,
+            period
         )
     }
 }

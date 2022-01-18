@@ -6,6 +6,6 @@ describe("Ouroboros", () => {
   const provider = Provider.local();
   setProvider(provider);
 
-  // testInitializeOuroboros(provider);
-  // testCreateLocker(provider);
+  testInitializeOuroboros(provider);
+  testCreateLocker(provider);
 });

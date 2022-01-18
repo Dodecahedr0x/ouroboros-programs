@@ -17,6 +17,9 @@ pub struct Locker {
     /// The receipt needed to unlock the locker
     pub receipt: Pubkey,
 
+    /// The beneficiary of this locker's vote
+    pub beneficiary: Pubkey,
+
     /// The amount of tokens locked
     pub amount: u64,
 

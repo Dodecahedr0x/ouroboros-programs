@@ -8,8 +8,8 @@ describe("Pools", () => {
   const provider = Provider.local();
   setProvider(provider);
 
-  testCreatePair(provider);
-  testAddLiquidity(provider);
-  testRemoveLiquidity(provider);
-  testSwapExactInput(provider);
+  // testCreatePair(provider);
+  // testAddLiquidity(provider);
+  // testRemoveLiquidity(provider);
+  // testSwapExactInput(provider);
 });
