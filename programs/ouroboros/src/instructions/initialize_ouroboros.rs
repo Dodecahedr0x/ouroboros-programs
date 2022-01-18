@@ -32,33 +32,19 @@ pub struct InitializeOuroboros<'info> {
     )]
     pub authority: AccountInfo<'info>,
 
-    /// The mint of the native token
+    /// The mint of the Ouroboros token
     #[account(
         init,
         payer = creator,
         mint::decimals = 9,
         mint::authority = authority,
         seeds = [
-            b"native",
+            b"mint",
             ouroboros_id.to_le_bytes().as_ref()
         ],
-        bump = bumps.native
+        bump = bumps.mint
     )]
-    pub native_mint: Account<'info, Mint>,
-
-    /// The mint of the locked token
-    #[account(
-        init,
-        payer = creator,
-        mint::decimals = 9,
-        mint::authority = authority,
-        seeds = [
-            b"locked",
-            ouroboros_id.to_le_bytes().as_ref()
-        ],
-        bump = bumps.locked
-    )]
-    pub locked_mint: Account<'info, Mint>,
+    pub mint: Account<'info, Mint>,
 
     /// The wallet creating the Ouroboros
     #[account(mut)]
@@ -68,7 +54,7 @@ pub struct InitializeOuroboros<'info> {
     #[account(
         init_if_needed,
         payer = creator,
-        associated_token::mint = native_mint,
+        associated_token::mint = mint,
         associated_token::authority = creator,
     )]
     pub creator_account: Account<'info, TokenAccount>,
@@ -89,7 +75,7 @@ impl<'info> InitializeOuroboros<'info> {
         CpiContext::new(
             self.token_program.to_account_info(),
             MintTo {
-                mint: self.native_mint.to_account_info(),
+                mint: self.mint.to_account_info(),
                 to: self.creator_account.to_account_info(),
                 authority: self.authority.to_account_info(),
             },
@@ -102,15 +88,18 @@ pub fn handler(
     bumps: InitializeOuroborosBumps,
     ouroboros_id: u64,
     initial_supply: u64,
-    base_weekly_emissions: u64,
-    time_multiplier: u64,
+    reward_period: u64,
+    start_date: i64,
+    expansion_factor: u64,
+    time_multiplier: u64
 ) -> ProgramResult {
     let ouroboros = &mut ctx.accounts.ouroboros;
     ouroboros.id = ouroboros_id;
     ouroboros.authority = ctx.accounts.authority.key();
-    ouroboros.native_mint = ctx.accounts.native_mint.key();
-    ouroboros.locked_mint = ctx.accounts.locked_mint.key();
-    ouroboros.base_emissions = base_weekly_emissions;
+    ouroboros.mint = ctx.accounts.mint.key();
+    ouroboros.reward_period = reward_period;
+    ouroboros.last_reward_period = start_date;
+    ouroboros.expansion_factor = expansion_factor;
     ouroboros.time_multiplier = time_multiplier;
     ouroboros.bumps = bumps;
 

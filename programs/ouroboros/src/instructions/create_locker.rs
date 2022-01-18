@@ -27,12 +27,12 @@ pub struct CreateLocker<'info> {
     #[account(
         mut,
         seeds = [
-            b"native",
+            b"mint",
             ouroboros.id.to_le_bytes().as_ref()
         ],
-        bump = ouroboros.bumps.native
+        bump = ouroboros.bumps.mint
     )]
-    pub native_mint: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
 
     /// The locker
     #[account(
@@ -55,7 +55,7 @@ pub struct CreateLocker<'info> {
         ],
         bump = bumps.account,
         payer = creator,
-        token::mint = native_mint,
+        token::mint = mint,
         token::authority = authority
     )]
     pub locker_account: Box<Account<'info, TokenAccount>>,
@@ -68,7 +68,7 @@ pub struct CreateLocker<'info> {
     #[account(
         init_if_needed,
         payer = creator,
-        associated_token::mint = native_mint,
+        associated_token::mint = mint,
         associated_token::authority = creator,
     )]
     pub creator_account: Box<Account<'info, TokenAccount>>,
@@ -140,7 +140,7 @@ pub fn handler(
     amount: u64,
     period: u64,
 ) -> ProgramResult {
-    let ouroboros = &ctx.accounts.ouroboros;
+    let ouroboros = &mut ctx.accounts.ouroboros;
     let locker = &mut ctx.accounts.locker;
     locker.id = id;
     locker.receipt = ctx.accounts.receipt.key();

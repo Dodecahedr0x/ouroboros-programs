@@ -1,6 +1,7 @@
 import { setProvider, Provider } from "@project-serum/anchor";
-import { testCreateLocker } from "./suites/createLocker";
-import { testInitializeOuroboros } from "./suites/initializeOuroboros";
+import { testCreateBeneficiary } from "./suites/ouroboros/createBeneficiary";
+import { testCreateLocker } from "./suites/ouroboros/createLocker";
+import { testInitializeOuroboros } from "./suites/ouroboros/initializeOuroboros";
 
 describe("Ouroboros", () => {
   const provider = Provider.local();
@@ -8,4 +9,5 @@ describe("Ouroboros", () => {
 
   testInitializeOuroboros(provider);
   testCreateLocker(provider);
+  testCreateBeneficiary(provider);
 });

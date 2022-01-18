@@ -12,8 +12,8 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
-import { Pools } from "../../target/types/pools";
-import { airdropUsers } from "../helpers";
+import { Pools } from "../../../target/types/pools";
+import { airdropUsers } from "../../helpers";
 import {
   AccountInfo,
   ASSOCIATED_TOKEN_PROGRAM_ID,

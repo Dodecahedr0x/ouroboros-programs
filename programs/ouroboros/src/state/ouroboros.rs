@@ -4,8 +4,7 @@ use anchor_lang::prelude::*;
 pub struct InitializeOuroborosBumps {
     pub ouroboros: u8,
     pub authority: u8,
-    pub native: u8,
-    pub locked: u8,
+    pub mint: u8,
 }
 
 /// The state of the ouroboros
@@ -19,13 +18,19 @@ pub struct Ouroboros {
     pub authority: Pubkey,
 
     /// The mint of the token distributed to stakers
-    pub native_mint: Pubkey,
+    pub mint: Pubkey,
 
-    /// The mint representing the locked token
-    pub locked_mint: Pubkey,
+    /// The reward period in seconds
+    pub reward_period: u64,
 
-    /// The base amount of tokens emitted each week
-    pub base_emissions: u64,
+    /// The last timestamp at which the protocol distributed incentives
+    pub last_reward_period: i64,
+
+    /// Total number of votes staked
+    pub total_votes: u64,
+
+    /// The % in BP of circulating supply expansion per period
+    pub expansion_factor: u64,
 
     /// Each week locked multiplies the amount of votes of the locker.
     /// The unit is the basis point (10000).

@@ -13,8 +13,8 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
-import { Ouroboros } from "../../target/types/ouroboros";
-import { airdropUsers } from "../helpers";
+import { Ouroboros } from "../../../target/types/ouroboros";
+import { airdropUsers } from "../../helpers";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -30,8 +30,11 @@ export const testCreateLocker = (provider: Provider) =>
     let creator: Keypair;
     let ouroborosId = new BN(Math.round(Math.random() * 100000));
     const initialSupply = new BN(10 ** 10);
-    const baseRewards = new BN(10 ** 10);
+    const rewardPeriod = new BN(5);
+    const startDate = new BN(10000000000);
+    const expansionFactor = new BN(10000);
     const timeMultiplier = new BN(10000);
+
 
     before(async () => {
       creator = Keypair.generate();
@@ -47,28 +50,21 @@ export const testCreateLocker = (provider: Provider) =>
           [Buffer.from("authority"), ouroborosId.toBuffer("le", 8)],
           program.programId
         );
-      const [nativeMintAddress, nativeMintBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("native"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
-      const [lockedMintAddress, lockedMintBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("locked"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
+      const [mintAddress, mintBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("mint"), ouroborosId.toBuffer("le", 8)],
+        program.programId
+      );
 
       const bumps = {
         ouroboros: ouroborosBump,
         authority: authorityBump,
-        native: nativeMintBump,
-        locked: lockedMintBump,
+        mint: mintBump,
       };
 
       const creatorAccount = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        nativeMintAddress,
+        mintAddress,
         creator.publicKey
       );
 
@@ -76,14 +72,15 @@ export const testCreateLocker = (provider: Provider) =>
         bumps,
         ouroborosId,
         initialSupply,
-        baseRewards,
+        rewardPeriod,
+        startDate,
+        expansionFactor,
         timeMultiplier,
         {
           accounts: {
             ouroboros: ouroborosAddress,
             authority: authorityAddress,
-            nativeMint: nativeMintAddress,
-            lockedMint: lockedMintAddress,
+            mint: mintAddress,
             creator: creator.publicKey,
             creatorAccount: creatorAccount,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -109,11 +106,10 @@ export const testCreateLocker = (provider: Provider) =>
           [Buffer.from("authority"), ouroborosId.toBuffer("le", 8)],
           program.programId
         );
-      const [nativeMintAddress, nativeMintBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("native"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
+      const [mintAddress, mintBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("mint"), ouroborosId.toBuffer("le", 8)],
+        program.programId
+      );
       const [lockerAddress, lockerBump] = await PublicKey.findProgramAddress(
         [Buffer.from("locker"), lockerId.toBuffer()],
         program.programId
@@ -135,7 +131,7 @@ export const testCreateLocker = (provider: Provider) =>
 
       const nativeMint = new Token(
         provider.connection,
-        nativeMintAddress,
+        mintAddress,
         TOKEN_PROGRAM_ID,
         creator
       );
@@ -162,11 +158,11 @@ export const testCreateLocker = (provider: Provider) =>
           accounts: {
             ouroboros: ouroborosAddress,
             authority: authorityAddress,
-            nativeMint: nativeMintAddress,
+            mint: mintAddress,
             locker: lockerAddress,
             lockerAccount: accountAddress,
-            owner: creator.publicKey,
-            ownerAccount: creatorAccount.address,
+            creator: creator.publicKey,
+            creatorAccount: creatorAccount.address,
             receipt: receiptAddress,
             receiptAccount: receiptAccount,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,

@@ -4,7 +4,7 @@ use anchor_spl::token::TokenAccount;
 use crate::state::{Beneficiary, Locker, Ouroboros};
 
 #[derive(Accounts)]
-pub struct ResetVote<'info> {
+pub struct CastVote<'info> {
     /// The Ouroboros
     #[account(
         seeds = [
@@ -15,7 +15,7 @@ pub struct ResetVote<'info> {
     )]
     pub ouroboros: Box<Account<'info, Ouroboros>>,
 
-    /// The old beneficiary
+    /// The beneficiary of the ouroboros incentives receiving votes
     #[account(
         mut,
         seeds = [
@@ -26,16 +26,17 @@ pub struct ResetVote<'info> {
     )]
     pub beneficiary: Box<Account<'info, Beneficiary>>,
 
-    /// The new beneficiary
+    /// The last beneficiary
+    /// Can be the same as beneficiary if it's the first vote
     #[account(
         mut,
         seeds = [
             b"beneficiary",
-            new_beneficiary.account.as_ref()
+            old_beneficiary.account.as_ref()
         ],
-        bump = new_beneficiary.bump
+        bump = old_beneficiary.bump
     )]
-    pub new_beneficiary: Box<Account<'info, Beneficiary>>,
+    pub old_beneficiary: Box<Account<'info, Beneficiary>>,
 
     /// The locker used to vote
     #[account(
@@ -44,8 +45,7 @@ pub struct ResetVote<'info> {
             b"locker",
             locker.id.as_ref()
         ],
-        bump = locker.bumps.locker,
-        has_one = beneficiary
+        bump = locker.bumps.locker
     )]
     pub locker: Box<Account<'info, Locker>>,
 
@@ -66,18 +66,24 @@ pub struct ResetVote<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<ResetVote>) -> ProgramResult {
+pub fn handler(ctx: Context<CastVote>) -> ProgramResult {
+    let ouroboros = &ctx.accounts.ouroboros;
+
     let locker = &mut ctx.accounts.locker;
     locker.beneficiary = ctx.accounts.beneficiary.key();
-
+    
     let beneficiary = &mut ctx.accounts.beneficiary;
-    beneficiary.votes -= locker.votes;
+    beneficiary.votes += locker.votes;
+    beneficiary.update(ctx.accounts.clock.unix_timestamp, 604800, ouroboros.total_votes);
 
-    let new_beneficiary = &mut ctx.accounts.new_beneficiary;
-    new_beneficiary.votes += locker.votes;
-
+    if locker.beneficiary != Pubkey::default() {
+        let old_beneficiary = &mut ctx.accounts.old_beneficiary;
+        old_beneficiary.votes -= locker.votes;
+        old_beneficiary.update(ctx.accounts.clock.unix_timestamp, 604800, ouroboros.total_votes);
+    }
+    
     msg!(
-        "Reset vote of locker {} for beneficiary {}",
+        "Initialized vote of locker {} for beneficiary {}",
         ctx.accounts.locker.key(),
         ctx.accounts.beneficiary.key()
     );

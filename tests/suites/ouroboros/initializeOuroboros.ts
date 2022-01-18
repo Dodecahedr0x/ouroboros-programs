@@ -12,8 +12,8 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
-import { Ouroboros } from "../../target/types/ouroboros";
-import { airdropUsers } from "../helpers";
+import { Ouroboros } from "../../../target/types/ouroboros";
+import { airdropUsers } from "../../helpers";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -29,8 +29,11 @@ export const testInitializeOuroboros = (provider: Provider) =>
     let creator: Keypair;
     let id = new BN(Math.round(Math.random() * 100000));
     const initialSupply = new BN(10 ** 10);
-    const baseRewards = new BN(10 ** 10);
-    const timeMultiplier = new BN(192);
+    const rewardPeriod = new BN(5);
+    const startDate = new BN(10000000000);
+    const expansionFactor = new BN(10000);
+    const timeMultiplier = new BN(10000);
+
 
     before(async () => {
       creator = Keypair.generate();
@@ -48,28 +51,22 @@ export const testInitializeOuroboros = (provider: Provider) =>
           [Buffer.from("authority"), id.toBuffer("le", 8)],
           program.programId
         );
-      const [nativeMintAddress, nativeMintBump] =
+      const [mintAddress, mintBump] =
         await PublicKey.findProgramAddress(
-          [Buffer.from("native"), id.toBuffer("le", 8)],
-          program.programId
-        );
-      const [lockedMintAddress, lockedMintBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("locked"), id.toBuffer("le", 8)],
+          [Buffer.from("mint"), id.toBuffer("le", 8)],
           program.programId
         );
 
       const bumps = {
         ouroboros: ouroborosBump,
         authority: authorityBump,
-        native: nativeMintBump,
-        locked: lockedMintBump,
+        mint: mintBump,
       };
 
       const creatorAccount = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        nativeMintAddress,
+        mintAddress,
         creator.publicKey
       );
 
@@ -77,14 +74,15 @@ export const testInitializeOuroboros = (provider: Provider) =>
         bumps,
         id,
         initialSupply,
-        baseRewards,
+        rewardPeriod,
+        startDate,
+        expansionFactor,
         timeMultiplier,
         {
           accounts: {
             ouroboros: ouroborosAddress,
             authority: authorityAddress,
-            nativeMint: nativeMintAddress,
-            lockedMint: lockedMintAddress,
+            mint: mintAddress,
             creator: creator.publicKey,
             creatorAccount: creatorAccount,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -100,14 +98,15 @@ export const testInitializeOuroboros = (provider: Provider) =>
 
       expect(o.id.toString()).to.equal(id.toString());
       expect(o.authority.toString()).to.equal(authorityAddress.toString());
-      expect(o.nativeMint.toString()).to.equal(nativeMintAddress.toString());
-      expect(o.lockedMint.toString()).to.equal(lockedMintAddress.toString());
-      expect(o.baseEmissions.toString()).to.equal(baseRewards.toString());
+      expect(o.mint.toString()).to.equal(mintAddress.toString());
+      expect(o.rewardPeriod.toString()).to.equal(rewardPeriod.toString());
+      expect(o.lastRewardPeriod.toString()).to.equal(startDate.toString());
+      expect(o.expansionFactor.toString()).to.equal(expansionFactor.toString());
       expect(o.timeMultiplier.toString()).to.equal(timeMultiplier.toString());
 
       const nativeMint = new Token(
         provider.connection,
-        nativeMintAddress,
+        mintAddress,
         TOKEN_PROGRAM_ID,
         creator
       );

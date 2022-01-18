@@ -27,11 +27,10 @@ pub struct CreateBeneficiary<'info> {
     )]
     pub beneficiary: Box<Account<'info, Beneficiary>>,
 
-    /// The wallet breating the beneficiary
+    /// The wallet creating the beneficiary
     #[account(mut)]
     pub creator: Signer<'info>,
 
-    pub clock: Sysvar<'info, Clock>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
@@ -43,7 +42,7 @@ pub fn handler(
 ) -> ProgramResult {
     let beneficiary = &mut ctx.accounts.beneficiary;
     beneficiary.account = account;
-    beneficiary.last_update = ctx.accounts.clock.unix_timestamp;
+    beneficiary.last_update = ctx.accounts.ouroboros.last_reward_period;
     beneficiary.bump = bump;
 
     msg!("Beneficiary created");
