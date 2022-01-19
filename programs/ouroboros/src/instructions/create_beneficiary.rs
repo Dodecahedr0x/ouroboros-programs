@@ -35,14 +35,10 @@ pub struct CreateBeneficiary<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<CreateBeneficiary>,
-    bump: u8,
-    account: Pubkey
-) -> ProgramResult {
+pub fn handler(ctx: Context<CreateBeneficiary>, bump: u8, account: Pubkey) -> ProgramResult {
     let beneficiary = &mut ctx.accounts.beneficiary;
     beneficiary.account = account;
-    beneficiary.last_update = ctx.accounts.ouroboros.last_reward_period;
+    beneficiary.last_update = ctx.accounts.ouroboros.last_period;
     beneficiary.bump = bump;
 
     msg!("Beneficiary created");

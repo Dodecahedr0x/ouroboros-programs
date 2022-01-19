@@ -3,6 +3,7 @@ import { testCastVote } from "./suites/ouroboros/castVote";
 import { testCreateBeneficiary } from "./suites/ouroboros/createBeneficiary";
 import { testCreateLocker } from "./suites/ouroboros/createLocker";
 import { testInitializeOuroboros } from "./suites/ouroboros/initializeOuroboros";
+import { testClaimIncentives } from "./suites/ouroboros/claimIncentives";
 
 describe("Ouroboros", () => {
   const provider = Provider.local();
@@ -11,5 +12,6 @@ describe("Ouroboros", () => {
   testInitializeOuroboros(provider);
   testCreateBeneficiary(provider);
   testCreateLocker(provider);
-  testCastVote(provider)
+  testCastVote(provider);
+  testClaimIncentives(provider);
 });

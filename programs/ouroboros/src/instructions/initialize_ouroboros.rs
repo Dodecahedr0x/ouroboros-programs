@@ -91,14 +91,14 @@ pub fn handler(
     reward_period: u64,
     start_date: i64,
     expansion_factor: u64,
-    time_multiplier: u64
+    time_multiplier: u64,
 ) -> ProgramResult {
     let ouroboros = &mut ctx.accounts.ouroboros;
     ouroboros.id = ouroboros_id;
     ouroboros.authority = ctx.accounts.authority.key();
     ouroboros.mint = ctx.accounts.mint.key();
     ouroboros.reward_period = reward_period;
-    ouroboros.last_reward_period = start_date;
+    ouroboros.last_period = start_date;
     ouroboros.expansion_factor = expansion_factor;
     ouroboros.time_multiplier = time_multiplier;
     ouroboros.bumps = bumps;

@@ -24,7 +24,10 @@ pub struct Ouroboros {
     pub reward_period: u64,
 
     /// The last timestamp at which the protocol distributed incentives
-    pub last_reward_period: i64,
+    pub last_period: i64,
+
+    /// Votes of the last period
+    pub last_period_votes: u64,
 
     /// Total number of votes staked
     pub total_votes: u64,

@@ -58,4 +58,9 @@ mod ouroboros {
     pub fn cast_vote(ctx: Context<CastVote>) -> ProgramResult {
         instructions::cast_vote::handler(ctx)
     }
+
+    /// Claims incentives for a beneficiary
+    pub fn claim_incentives(ctx: Context<ClaimIncentives>) -> ProgramResult {
+        instructions::claim_incentives::handler(ctx)
+    }
 }

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::TokenAccount;
 
-use crate::state::{Beneficiary, Locker, Ouroboros};
+use crate::{state::{Beneficiary, Locker, Ouroboros}, errors::ErrorCode};
 
 #[derive(Accounts)]
 pub struct CastVote<'info> {
@@ -60,21 +60,25 @@ pub struct CastVote<'info> {
             receipt_account.amount == 1
     )]
     pub receipt_account: Box<Account<'info, TokenAccount>>,
-
-    pub rent: Sysvar<'info, Rent>,
-    pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<CastVote>) -> ProgramResult {
     let locker = &mut ctx.accounts.locker;
-    
     let beneficiary = &mut ctx.accounts.beneficiary;
-    beneficiary.votes += locker.votes;
 
-    msg!("ben {}, {}, {}", locker.beneficiary, beneficiary.votes, locker.votes);
+    if beneficiary.last_update != ctx.accounts.ouroboros.last_period {
+        return Err(ErrorCode::UnclaimedIncentives.into());
+    }
+
+    beneficiary.votes += locker.votes;
 
     if locker.beneficiary != Pubkey::default() {
         let old_beneficiary = &mut ctx.accounts.old_beneficiary;
+
+        if old_beneficiary.last_update != ctx.accounts.ouroboros.last_period {
+            return Err(ErrorCode::UnclaimedIncentives.into());
+        }
+        
         old_beneficiary.votes -= locker.votes;
     }
 

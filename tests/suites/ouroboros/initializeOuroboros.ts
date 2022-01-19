@@ -100,7 +100,7 @@ export const testInitializeOuroboros = (provider: Provider) =>
       expect(o.authority.toString()).to.equal(authorityAddress.toString());
       expect(o.mint.toString()).to.equal(mintAddress.toString());
       expect(o.rewardPeriod.toString()).to.equal(rewardPeriod.toString());
-      expect(o.lastRewardPeriod.toString()).to.equal(startDate.toString());
+      expect(o.lastPeriod.toString()).to.equal(startDate.toString());
       expect(o.expansionFactor.toString()).to.equal(expansionFactor.toString());
       expect(o.timeMultiplier.toString()).to.equal(timeMultiplier.toString());
 
