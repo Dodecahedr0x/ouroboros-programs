@@ -45,11 +45,11 @@ pub struct SwapExactInput<'info> {
 
     /// The mint of the token A
     #[account(mut, address = pair.mint_a)]
-    pub mint_a: AccountInfo<'info>,
+    pub mint_a: Box<Account<'info, Mint>>,
 
     /// The mint of the token B
     #[account(mut, address = pair.mint_b)]
-    pub mint_b: AccountInfo<'info>,
+    pub mint_b: Box<Account<'info, Mint>>,
 
     /// The pair account holding token A
     #[account(
@@ -289,27 +289,14 @@ pub fn handler(
     let new_reserve_a = reserve_a - amount_out_a;
     let new_reserve_b = reserve_b - amount_out_b;
 
-    msg!("Before a = {}; after a = {}", reserve_a, new_reserve_a);
-    msg!(
-        "Before k = {}; after k = {}",
-        k(
-            new_reserve_a + amount_in_a - amount_in_a / 1000,
-            9,
-            new_reserve_b + amount_in_b - amount_in_b / 1000,
-            9,
-            pair.stable,
-        ),
-        k(reserve_a, 9, reserve_b, 9, pair.stable)
-    );
-
     // TODO: Only works with 9 decimals tokens
     if k(
         new_reserve_a + amount_in_a - amount_in_a / 1000,
-        9,
+        ctx.accounts.mint_a.decimals,
         new_reserve_b + amount_in_b - amount_in_b / 1000,
-        9,
+        ctx.accounts.mint_b.decimals,
         pair.stable,
-    ) < k(reserve_a, 9, reserve_b, 9, pair.stable)
+    ) < k(reserve_a, ctx.accounts.mint_a.decimals, reserve_b, ctx.accounts.mint_b.decimals, pair.stable)
     {
         return Err(ErrorCode::InvariantK.into());
     }
