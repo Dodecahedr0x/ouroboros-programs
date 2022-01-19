@@ -10,6 +10,7 @@ use crate::state::{CreateLockerBumps, Locker, Ouroboros};
 pub struct CreateLocker<'info> {
     /// The Ouroboros
     #[account(
+        mut,
         seeds = [
             b"ouroboros",
             ouroboros.id.to_le_bytes().as_ref()
@@ -141,9 +142,12 @@ pub fn handler(
     period: u64,
 ) -> ProgramResult {
     let ouroboros = &mut ctx.accounts.ouroboros;
+    ouroboros.total_votes += amount;
+
     let locker = &mut ctx.accounts.locker;
     locker.id = id;
     locker.receipt = ctx.accounts.receipt.key();
+    locker.beneficiary = Pubkey::default();
     locker.amount = amount;
     locker.votes = amount * period * ouroboros.time_multiplier / 604800 / 10000;
     locker.unlock_timestamp = ctx.accounts.clock.unix_timestamp + period as i64;

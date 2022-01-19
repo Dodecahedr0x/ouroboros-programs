@@ -61,31 +61,30 @@ pub struct CastVote<'info> {
     )]
     pub receipt_account: Box<Account<'info, TokenAccount>>,
 
-    pub clock: Sysvar<'info, Clock>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<CastVote>) -> ProgramResult {
-    let ouroboros = &ctx.accounts.ouroboros;
-
     let locker = &mut ctx.accounts.locker;
-    locker.beneficiary = ctx.accounts.beneficiary.key();
     
     let beneficiary = &mut ctx.accounts.beneficiary;
     beneficiary.votes += locker.votes;
-    beneficiary.update(ctx.accounts.clock.unix_timestamp, 604800, ouroboros.total_votes);
+
+    msg!("ben {}, {}, {}", locker.beneficiary, beneficiary.votes, locker.votes);
 
     if locker.beneficiary != Pubkey::default() {
         let old_beneficiary = &mut ctx.accounts.old_beneficiary;
         old_beneficiary.votes -= locker.votes;
-        old_beneficiary.update(ctx.accounts.clock.unix_timestamp, 604800, ouroboros.total_votes);
     }
+
+    locker.beneficiary = ctx.accounts.beneficiary.key();
     
     msg!(
-        "Initialized vote of locker {} for beneficiary {}",
+        "Cast vote of locker {} for beneficiary {} with {} votes",
         ctx.accounts.locker.key(),
-        ctx.accounts.beneficiary.key()
+        ctx.accounts.beneficiary.key(),
+        ctx.accounts.locker.votes
     );
 
     Ok(())

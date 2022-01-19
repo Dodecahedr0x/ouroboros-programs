@@ -21,20 +21,23 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 
-export const testCreateLocker = (provider: Provider) =>
-  describe("Create a locker", () => {
+export const testCastVote = (provider: Provider) =>
+  describe("Cast a vote using a locker", () => {
     setProvider(provider);
 
     const program = workspace.Ouroboros as Program<Ouroboros>;
 
     let creator: Keypair;
     let ouroborosId = new BN(Math.round(Math.random() * 100000));
+    let lockerId = Keypair.generate().publicKey;
+    let someAccount = Keypair.generate().publicKey;
+    let someAccount2 = Keypair.generate().publicKey;
     const initialSupply = new BN(10 ** 10);
     const rewardPeriod = new BN(5);
     const startDate = new BN(10000000000);
     const expansionFactor = new BN(10000);
     const timeMultiplier = new BN(10000);
-
+    const depositAmount = new BN(10 ** 9);
 
     before(async () => {
       creator = Keypair.generate();
@@ -55,13 +58,13 @@ export const testCreateLocker = (provider: Provider) =>
         program.programId
       );
 
-      const bumps = {
+      let bumps: any = {
         ouroboros: ouroborosBump,
         authority: authorityBump,
         mint: mintBump,
       };
 
-      const creatorAccount = await Token.getAssociatedTokenAddress(
+      const creatorAccountAddress = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         mintAddress,
@@ -82,7 +85,7 @@ export const testCreateLocker = (provider: Provider) =>
             authority: authorityAddress,
             mint: mintAddress,
             creator: creator.publicKey,
-            creatorAccount: creatorAccount,
+            creatorAccount: creatorAccountAddress,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
             rent: SYSVAR_RENT_PUBKEY,
@@ -91,25 +94,47 @@ export const testCreateLocker = (provider: Provider) =>
           signers: [creator],
         }
       );
-    });
 
-    it("Create a locker", async () => {
-      let lockerId = Keypair.generate().publicKey;
-
-      const [ouroborosAddress, ouroborosBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("ouroboros"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
-      const [authorityAddress, authorityBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("authority"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
-      const [mintAddress, mintBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("mint"), ouroborosId.toBuffer("le", 8)],
+      const [beneficiaryAddress, beneficiaryBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("beneficiary"), someAccount.toBuffer()],
         program.programId
       );
+
+      await program.rpc.createBeneficiary(
+        beneficiaryBump,
+        someAccount,
+        {
+          accounts: {
+            ouroboros: ouroborosAddress,
+            beneficiary: beneficiaryAddress,
+            creator: creator.publicKey,
+            rent: SYSVAR_RENT_PUBKEY,
+            systemProgram: SystemProgram.programId,
+          },
+          signers: [creator],
+        }
+      );
+
+      const [beneficiary2Address, beneficiary2Bump] = await PublicKey.findProgramAddress(
+        [Buffer.from("beneficiary"), someAccount2.toBuffer()],
+        program.programId
+      );
+
+      await program.rpc.createBeneficiary(
+        beneficiary2Bump,
+        someAccount2,
+        {
+          accounts: {
+            ouroboros: ouroborosAddress,
+            beneficiary: beneficiary2Address,
+            creator: creator.publicKey,
+            rent: SYSVAR_RENT_PUBKEY,
+            systemProgram: SystemProgram.programId,
+          },
+          signers: [creator],
+        }
+      );
+
       const [lockerAddress, lockerBump] = await PublicKey.findProgramAddress(
         [Buffer.from("locker"), lockerId.toBuffer()],
         program.programId
@@ -123,7 +148,7 @@ export const testCreateLocker = (provider: Provider) =>
         program.programId
       );
 
-      const bumps = {
+      bumps = {
         locker: lockerBump,
         receipt: receiptBump,
         account: accountBump,
@@ -146,7 +171,6 @@ export const testCreateLocker = (provider: Provider) =>
         creator.publicKey
       );
 
-      const depositAmount = new BN(10 ** 9);
       const lockingPeriod = new BN(604800);
 
       await program.rpc.createLocker(
@@ -174,29 +198,72 @@ export const testCreateLocker = (provider: Provider) =>
           signers: [creator],
         }
       );
+    });
 
-      const time = await provider.connection.getBlockTime(
-        await provider.connection.getSlot("recent")
+    it("Cast the first vote", async () => {
+      const [ouroborosAddress, ouroborosBump] =
+        await PublicKey.findProgramAddress(
+          [Buffer.from("ouroboros"), ouroborosId.toBuffer("le", 8)],
+          program.programId
+        );
+      const [authorityAddress, authorityBump] =
+        await PublicKey.findProgramAddress(
+          [Buffer.from("authority"), ouroborosId.toBuffer("le", 8)],
+          program.programId
+        );
+      const [mintAddress, mintBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("mint"), ouroborosId.toBuffer("le", 8)],
+        program.programId
+      );
+      const [lockerAddress, lockerBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("locker"), lockerId.toBuffer()],
+        program.programId
+      );
+      const [receiptAddress, receiptBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("receipt"), lockerId.toBuffer()],
+        program.programId
+      );      
+      const [beneficiaryAddress, beneficiaryBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("beneficiary"), someAccount.toBuffer()],
+        program.programId
+      );
+      const [beneficiary2Address, beneficiary2Bump] = await PublicKey.findProgramAddress(
+        [Buffer.from("beneficiary"), someAccount2.toBuffer()],
+        program.programId
       );
 
-      const o = await program.account.ouroboros.fetch(ouroborosAddress);
+      const receiptAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        receiptAddress,
+        creator.publicKey
+      );
 
-      expect(o.totalVotes.toString()).to.equal(depositAmount.toString());
+      await program.rpc.castVote(
+        {
+          accounts: {
+            ouroboros: ouroborosAddress,
+            beneficiary: beneficiaryAddress,
+            oldBeneficiary: beneficiary2Address,
+            locker: lockerAddress,
+            voter: creator.publicKey,
+            receiptAccount: receiptAccount,
+            rent: SYSVAR_RENT_PUBKEY,
+            systemProgram: SystemProgram.programId,
+          },
+          signers: [creator],
+        }
+      );
 
       const l = await program.account.locker.fetch(lockerAddress);
 
-      expect(l.id.toString()).to.equal(lockerId.toString());
-      expect(l.receipt.toString()).to.equal(receiptAddress.toString());
-      expect(l.amount.toString()).to.equal(depositAmount.toString());
+      expect(l.beneficiary.toString()).to.equal(beneficiaryAddress.toString());
       expect(l.votes.toString()).to.equal(depositAmount.toString());
-      expect(l.unlockTimestamp.toString()).to.equal(
-        new BN(time).add(lockingPeriod).toString()
-      );
+      
+      const b = await program.account.beneficiary.fetch(beneficiaryAddress);
 
-      expect(
-        (
-          await nativeMint.getOrCreateAssociatedAccountInfo(creator.publicKey)
-        ).amount.toString()
-      ).to.equal(initialSupply.sub(depositAmount).toString());
+      expect(b.account.toString()).to.equal(someAccount.toString());
+      expect(b.votes.toString()).to.equal(depositAmount.toString());
+      expect(b.weight.toString()).to.equal(new BN(0).toString());
     });
   });
