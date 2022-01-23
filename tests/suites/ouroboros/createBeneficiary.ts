@@ -49,11 +49,10 @@ export const testCreateBeneficiary = (provider: Provider) =>
           [Buffer.from("authority"), ouroborosId.toBuffer("le", 8)],
           program.programId
         );
-      const [mintAddress, mintBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("mint"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
+      const [mintAddress, mintBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("mint"), ouroborosId.toBuffer("le", 8)],
+        program.programId
+      );
 
       const bumps = {
         ouroboros: ouroborosBump,
@@ -94,32 +93,32 @@ export const testCreateBeneficiary = (provider: Provider) =>
     });
 
     it("Create a beneficiary", async () => {
-      const [ouroborosAddress] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("ouroboros"), ouroborosId.toBuffer("le", 8)],
-          program.programId
-        );
-
-      const someAccount = Keypair.generate().publicKey;
-      const [beneficiaryAddress, beneficiaryBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("beneficiary"), someAccount.toBuffer()],
+      const [ouroborosAddress] = await PublicKey.findProgramAddress(
+        [Buffer.from("ouroboros"), ouroborosId.toBuffer("le", 8)],
         program.programId
       );
 
-      await program.rpc.createBeneficiary(
-        beneficiaryBump,
-        someAccount,
-        {
-          accounts: {
-            ouroboros: ouroborosAddress,
-            beneficiary: beneficiaryAddress,
-            creator: creator.publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
-            systemProgram: SystemProgram.programId,
-          },
-          signers: [creator],
-        }
-      );
+      const someAccount = Keypair.generate().publicKey;
+      const [beneficiaryAddress, beneficiaryBump] =
+        await PublicKey.findProgramAddress(
+          [
+            Buffer.from("beneficiary"),
+            ouroborosId.toBuffer("le", 8),
+            someAccount.toBuffer(),
+          ],
+          program.programId
+        );
+
+      await program.rpc.createBeneficiary(beneficiaryBump, someAccount, {
+        accounts: {
+          ouroboros: ouroborosAddress,
+          beneficiary: beneficiaryAddress,
+          creator: creator.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
+          systemProgram: SystemProgram.programId,
+        },
+        signers: [creator],
+      });
 
       const b = await program.account.beneficiary.fetch(beneficiaryAddress);
 

@@ -117,7 +117,11 @@ export const testClaimIncentives = (provider: Provider) =>
 
       const [beneficiaryAddress, beneficiaryBump] =
         await PublicKey.findProgramAddress(
-          [Buffer.from("beneficiary"), someAccount.toBuffer()],
+          [
+            Buffer.from("beneficiary"),
+            ouroborosId.toBuffer("le", 8),
+            someAccount.toBuffer(),
+          ],
           program.programId
         );
 
@@ -134,7 +138,11 @@ export const testClaimIncentives = (provider: Provider) =>
 
       const [beneficiary2Address, beneficiary2Bump] =
         await PublicKey.findProgramAddress(
-          [Buffer.from("beneficiary"), someAccount2.toBuffer()],
+          [
+            Buffer.from("beneficiary"),
+            ouroborosId.toBuffer("le", 8),
+            someAccount2.toBuffer(),
+          ],
           program.programId
         );
 
@@ -150,15 +158,27 @@ export const testClaimIncentives = (provider: Provider) =>
       });
 
       const [lockerAddress, lockerBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("locker"), lockerId.toBuffer()],
+        [
+          Buffer.from("locker"),
+          ouroborosId.toBuffer("le", 8),
+          lockerId.toBuffer(),
+        ],
         program.programId
       );
       const [receiptAddress, receiptBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("receipt"), lockerId.toBuffer()],
+        [
+          Buffer.from("receipt"),
+          ouroborosId.toBuffer("le", 8),
+          lockerId.toBuffer(),
+        ],
         program.programId
       );
       const [accountAddress, accountBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("locker_account"), lockerId.toBuffer()],
+        [
+          Buffer.from("locker_account"),
+          ouroborosId.toBuffer("le", 8),
+          lockerId.toBuffer(),
+        ],
         program.programId
       );
 
@@ -230,7 +250,11 @@ export const testClaimIncentives = (provider: Provider) =>
         program.programId
       );
       const [beneficiaryAddress] = await PublicKey.findProgramAddress(
-        [Buffer.from("beneficiary"), someAccount.toBuffer()],
+        [
+          Buffer.from("beneficiary"),
+          ouroborosId.toBuffer("le", 8),
+          someAccount.toBuffer(),
+        ],
         program.programId
       );
 
@@ -260,6 +284,12 @@ export const testClaimIncentives = (provider: Provider) =>
       );
       expect(
         (await nativeMint.getAccountInfo(someAccount)).amount.toString()
-      ).to.equal(initialSupply.sub(depositAmount).mul(expansionFactor).div(new BN(10000)).toString());
+      ).to.equal(
+        initialSupply
+          .sub(depositAmount)
+          .mul(expansionFactor)
+          .div(new BN(10000))
+          .toString()
+      );
     });
   });

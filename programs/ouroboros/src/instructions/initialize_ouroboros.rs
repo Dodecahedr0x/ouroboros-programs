@@ -4,10 +4,10 @@ use anchor_spl::{
     token::{self, Mint, MintTo, Token, TokenAccount},
 };
 
-use crate::state::{InitializeOuroborosBumps, Ouroboros};
+use crate::state::{OuroborosBumps, Ouroboros};
 
 #[derive(Accounts)]
-#[instruction(bumps: InitializeOuroborosBumps, ouroboros_id: u64)]
+#[instruction(bumps: OuroborosBumps, ouroboros_id: u64)]
 pub struct InitializeOuroboros<'info> {
     /// The Ouroboros
     #[account(
@@ -85,10 +85,10 @@ impl<'info> InitializeOuroboros<'info> {
 
 pub fn handler(
     ctx: Context<InitializeOuroboros>,
-    bumps: InitializeOuroborosBumps,
+    bumps: OuroborosBumps,
     ouroboros_id: u64,
     initial_supply: u64,
-    reward_period: u64,
+    period: u64,
     start_date: i64,
     expansion_factor: u64,
     time_multiplier: u64,
@@ -97,7 +97,7 @@ pub fn handler(
     ouroboros.id = ouroboros_id;
     ouroboros.authority = ctx.accounts.authority.key();
     ouroboros.mint = ctx.accounts.mint.key();
-    ouroboros.reward_period = reward_period;
+    ouroboros.period = period;
     ouroboros.last_period = start_date;
     ouroboros.expansion_factor = expansion_factor;
     ouroboros.time_multiplier = time_multiplier;

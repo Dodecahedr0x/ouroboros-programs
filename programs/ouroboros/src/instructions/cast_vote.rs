@@ -20,6 +20,7 @@ pub struct CastVote<'info> {
         mut,
         seeds = [
             b"beneficiary",
+            ouroboros.id.to_le_bytes().as_ref(),
             beneficiary.account.as_ref()
         ],
         bump = beneficiary.bump
@@ -32,6 +33,7 @@ pub struct CastVote<'info> {
         mut,
         seeds = [
             b"beneficiary",
+            ouroboros.id.to_le_bytes().as_ref(),
             old_beneficiary.account.as_ref()
         ],
         bump = old_beneficiary.bump
@@ -43,6 +45,7 @@ pub struct CastVote<'info> {
         mut,
         seeds = [
             b"locker",
+            ouroboros.id.to_le_bytes().as_ref(),
             locker.id.as_ref()
         ],
         bump = locker.bumps.locker

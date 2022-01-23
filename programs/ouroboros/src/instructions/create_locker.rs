@@ -3,10 +3,10 @@ use anchor_spl::associated_token;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount, Transfer};
 
-use crate::state::{CreateLockerBumps, Locker, Ouroboros};
+use crate::state::{LockerBumps, Locker, Ouroboros};
 
 #[derive(Accounts)]
-#[instruction(bumps: CreateLockerBumps, id: Pubkey)]
+#[instruction(bumps: LockerBumps, id: Pubkey)]
 pub struct CreateLocker<'info> {
     /// The Ouroboros
     #[account(
@@ -40,6 +40,7 @@ pub struct CreateLocker<'info> {
         init,
         seeds = [
             b"locker",
+            ouroboros.id.to_le_bytes().as_ref(),
             id.as_ref()
         ],
         bump = bumps.locker,
@@ -52,6 +53,7 @@ pub struct CreateLocker<'info> {
         init,
         seeds = [
             b"locker_account",
+            ouroboros.id.to_le_bytes().as_ref(),
             id.as_ref()
         ],
         bump = bumps.account,
@@ -79,6 +81,7 @@ pub struct CreateLocker<'info> {
         init,
         seeds = [
             b"receipt",
+            ouroboros.id.to_le_bytes().as_ref(),
             id.as_ref()
         ],
         bump = bumps.receipt,
@@ -136,7 +139,7 @@ impl<'info> CreateLocker<'info> {
 
 pub fn handler(
     ctx: Context<CreateLocker>,
-    bumps: CreateLockerBumps,
+    bumps: LockerBumps,
     id: Pubkey,
     amount: u64,
     period: u64,
@@ -150,6 +153,7 @@ pub fn handler(
     locker.beneficiary = Pubkey::default();
     locker.amount = amount;
     locker.votes = amount * period * ouroboros.time_multiplier / 604800 / 10000;
+    locker.creation_timestamp = ctx.accounts.clock.unix_timestamp;
     locker.unlock_timestamp = ctx.accounts.clock.unix_timestamp + period as i64;
     locker.bumps = bumps;
 

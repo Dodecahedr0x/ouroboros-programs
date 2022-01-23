@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeOuroborosBumps {
+pub struct OuroborosBumps {
     pub ouroboros: u8,
     pub authority: u8,
     pub mint: u8,
@@ -21,7 +21,7 @@ pub struct Ouroboros {
     pub mint: Pubkey,
 
     /// The reward period in seconds
-    pub reward_period: u64,
+    pub period: u64,
 
     /// The last timestamp at which the protocol distributed incentives
     pub last_period: i64,
@@ -42,5 +42,5 @@ pub struct Ouroboros {
     pub time_multiplier: u64,
 
     /// The bump used to generate PDAs
-    pub bumps: InitializeOuroborosBumps,
+    pub bumps: OuroborosBumps,
 }

@@ -20,6 +20,7 @@ pub struct CreateBeneficiary<'info> {
         init,
         seeds = [
             b"beneficiary",
+            ouroboros.id.to_le_bytes().as_ref(),
             account.as_ref()
         ],
         bump = bump,

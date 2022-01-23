@@ -35,7 +35,6 @@ export const testCreateLocker = (provider: Provider) =>
     const expansionFactor = new BN(10000);
     const timeMultiplier = new BN(10000);
 
-
     before(async () => {
       creator = Keypair.generate();
       await airdropUsers([creator], provider);
@@ -111,15 +110,27 @@ export const testCreateLocker = (provider: Provider) =>
         program.programId
       );
       const [lockerAddress, lockerBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("locker"), lockerId.toBuffer()],
+        [
+          Buffer.from("locker"),
+          ouroborosId.toBuffer("le", 8),
+          lockerId.toBuffer(),
+        ],
         program.programId
       );
       const [receiptAddress, receiptBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("receipt"), lockerId.toBuffer()],
+        [
+          Buffer.from("receipt"),
+          ouroborosId.toBuffer("le", 8),
+          lockerId.toBuffer(),
+        ],
         program.programId
       );
       const [accountAddress, accountBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("locker_account"), lockerId.toBuffer()],
+        [
+          Buffer.from("locker_account"),
+          ouroborosId.toBuffer("le", 8),
+          lockerId.toBuffer(),
+        ],
         program.programId
       );
 

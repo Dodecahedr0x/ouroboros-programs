@@ -7,7 +7,7 @@ pub mod instructions;
 pub mod state;
 
 use instructions::*;
-use state::{locker::*, ouroboros::*};
+use state::{asset::*, locker::*, ouroboros::*};
 
 declare_id!("3MVR32fVYfnzR1VK8nmUE6XqAVvQy2N2dcHToeB8r78p");
 
@@ -18,10 +18,10 @@ mod ouroboros {
     /// Initializes the ouroboros
     pub fn initialize_ouroboros(
         ctx: Context<InitializeOuroboros>,
-        bumps: InitializeOuroborosBumps,
+        bumps: OuroborosBumps,
         ouroboros_id: u64,
         initial_supply: u64,
-        reward_period: u64,
+        period: u64,
         start_date: i64,
         expansion_factor: u64,
         time_multiplier: u64,
@@ -31,7 +31,7 @@ mod ouroboros {
             bumps,
             ouroboros_id,
             initial_supply,
-            reward_period,
+            period,
             start_date,
             expansion_factor,
             time_multiplier,
@@ -39,14 +39,18 @@ mod ouroboros {
     }
 
     /// Create a beneficiary of the protocol
-    pub fn create_beneficiary(ctx: Context<CreateBeneficiary>, bump: u8, account: Pubkey) -> ProgramResult {
+    pub fn create_beneficiary(
+        ctx: Context<CreateBeneficiary>,
+        bump: u8,
+        account: Pubkey,
+    ) -> ProgramResult {
         instructions::create_beneficiary::handler(ctx, bump, account)
     }
 
     /// Create a token locker
     pub fn create_locker(
         ctx: Context<CreateLocker>,
-        bumps: CreateLockerBumps,
+        bumps: LockerBumps,
         id: Pubkey,
         amount: u64,
         period: u64,
@@ -62,5 +66,21 @@ mod ouroboros {
     /// Claims incentives for a beneficiary
     pub fn claim_incentives(ctx: Context<ClaimIncentives>) -> ProgramResult {
         instructions::claim_incentives::handler(ctx)
+    }
+
+    /// Called by a bribed service to notify the ouroboros
+    pub fn receive_asset(
+        ctx: Context<ReceiveAsset>,
+        bumps: AssetBumps,
+        snapshot_bump: u8,
+        snapshot_index: u64,
+        amount: u64,
+    ) -> ProgramResult {
+        instructions::receive_asset::handler(ctx, bumps, snapshot_bump, snapshot_index, amount)
+    }
+
+    /// Lets a locker collect the fees it has collected for given period
+    pub fn collect_fees(ctx: Context<CollectFees>, bump: u8) -> ProgramResult {
+        instructions::collect_fees::handler(ctx, bump)
     }
 }

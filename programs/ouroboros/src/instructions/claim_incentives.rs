@@ -38,6 +38,7 @@ pub struct ClaimIncentives<'info> {
         mut,
         seeds = [
             b"beneficiary",
+            ouroboros.id.to_le_bytes().as_ref(),
             beneficiary.account.as_ref()
         ],
         bump = beneficiary.bump,
@@ -71,13 +72,13 @@ impl<'info> ClaimIncentives<'info> {
 
 pub fn handler(ctx: Context<ClaimIncentives>) -> ProgramResult {
     let ouroboros = &mut ctx.accounts.ouroboros;
-    if ouroboros.last_period + ouroboros.reward_period as i64 > ctx.accounts.clock.unix_timestamp {
+    if ouroboros.last_period + ouroboros.period as i64 > ctx.accounts.clock.unix_timestamp {
         msg!(
             "Ending ouroboros period [{}, {}[",
             ouroboros.last_period,
-            ouroboros.last_period + ouroboros.reward_period as i64
+            ouroboros.last_period + ouroboros.period as i64
         );
-        ouroboros.last_period += ouroboros.reward_period as i64;
+        ouroboros.last_period += ouroboros.period as i64;
         ouroboros.last_period_votes = ouroboros.total_votes;
     }
 

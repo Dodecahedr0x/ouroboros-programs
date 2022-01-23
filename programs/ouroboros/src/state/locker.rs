@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct CreateLockerBumps {
+pub struct LockerBumps {
     pub locker: u8,
     pub receipt: u8,
     pub account: u8
@@ -26,9 +26,12 @@ pub struct Locker {
     /// Votes granted by this locker
     pub votes: u64,
 
+    /// The creation date of the locker
+    pub creation_timestamp: i64,
+
     /// The unlock date of the locker
     pub unlock_timestamp: i64,
 
     /// The bump used to generate PDAs
-    pub bumps: CreateLockerBumps,
+    pub bumps: LockerBumps,
 }

@@ -23,18 +23,34 @@ This results in the following properties:
 - Locked holders earn half of all token emission to prevent dilution.
 - Liquidity providers earn 100% of trading fees on unincentivized pools
 
-## Accounts
+## Modules
 
-This section describes the different accounts used by the programs
+There are several modules composing this program:
+
+- **Pools**: a UniswapV2-like DEX on the Solana blockchain with the stable pools for correlated assets (e.g. USDC/USDT) and standard pools.
+- **Ouroboros**: a vote-locking mechanism to incentivize pools.
+- **Gauges**: allows distribution of arbitrary tokens to users providing liquidity.
+
+### Pools
+
+- Stable pools and standard pools
+- All pools have a 0.1% fee applied, stored outside the liquidity pool, that liquidity providers can claim.
 
 ### Ouroboros
 
-An Ouroboros is the core of the governance and token emissions. It is the owner of the native token and controls most paremeters:
+- Owners of the ouroboros token can put them in a locker for a defined period of time and acquire voting rights in exchange.
+- The voting rights are associated to the locker, which is a tradable NFT.
+- Holders can vote for a beneficiary which wil receive an portion of the weekly emissions based on the portion of votes the beneficiary received.
+- Total weekly emissions are equal to the circulating supply (tokens outside of lockers) times an expansion factor.
 
-- Weekly token emissions
-- Token vesting range for the lockers
-- Initial supply
+### Gauge
 
-### Lockers
+- Pools LP can deposit their token in a gauge to earn trading fees or incentives.
+- Gauges bribed by Ouroboros voters give away a fraction of their trading fees accumulated to bribers in exchange for Ouroboros incentives.
 
-Holders of the native token can stake their tokens in lockers for a period of time. Holders can open multiple lockers with different vesting periods.
+## Evolutions
+
+below is a list of **envisionned** changes:
+
+- Auto-compounding vaults. On each interaction, the vault will collect fees and add them back as liquidity. This essentially enables standard UniV2 pools where fees are added as liquidity. Enabling interactions with gauges is important as well.
+- Oracles. Adding an oracle account that tracks the price of assets in pools, similar to what UniV2 already does.

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-/// A vesting locker account
+/// The beneficiary of the incentives
 #[account]
 #[derive(Default)]
 pub struct Beneficiary {
@@ -18,13 +18,4 @@ pub struct Beneficiary {
 
     /// The bump used to generate PDAs
     pub bump: u8,
-}
-
-impl Beneficiary {
-    pub fn update(&mut self, current_time: i64, rewards_period: i64, total_votes: u64) {
-        if current_time  <= self.last_update + rewards_period {
-            self.last_update += rewards_period;
-            self.weight = (self.votes / total_votes) as u16;
-        }
-    }
 }
