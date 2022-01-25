@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@project-serum/anchor": "^0.18.2",
+        "@saberhq/token-utils": "^1.12.35",
         "@solana/spl-token": "^0.1.8"
     },
     "devDependencies": {

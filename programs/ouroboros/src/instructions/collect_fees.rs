@@ -16,13 +16,8 @@ pub struct CollectFees<'info> {
             ouroboros.id.to_le_bytes().as_ref()
         ],
         bump = ouroboros.bumps.ouroboros,
-        has_one = authority
     )]
     pub ouroboros: Box<Account<'info, Ouroboros>>,
-
-    /// The Ouroboros authority
-    #[account(mut)]
-    pub authority: AccountInfo<'info>,
 
     /// The locker collecting fees
     #[account(
@@ -45,9 +40,23 @@ pub struct CollectFees<'info> {
             asset.mint.as_ref()
         ],
         bump = asset.bumps.asset,
-        has_one = mint
+        has_one = mint,
+        has_one = authority
     )]
     pub asset: Box<Account<'info, Asset>>,
+
+    
+    /// The asset authority
+    #[account(
+        mut,
+        seeds = [
+            b"asset_authority",
+            ouroboros.id.to_le_bytes().as_ref(),
+            asset.mint.key().as_ref()
+        ],
+        bump = asset.bumps.authority
+    )]
+    pub authority: AccountInfo<'info>,
 
     /// The snapshot of the asset at the time the locker was created
     /// Or the earliest snapshot of the asset
@@ -56,13 +65,13 @@ pub struct CollectFees<'info> {
             b"snapshot",
             ouroboros.id.to_le_bytes().as_ref(),
             asset.mint.as_ref(),
-            (current_snapshot.index - 1).to_le_bytes().as_ref()
+            previous_snapshot.index.to_le_bytes().as_ref()
         ],
-        bump = current_snapshot.bump,
+        bump = previous_snapshot.bump,
         has_one = mint,
         constraint = 
-            previous_snapshot.timestamp < locker.creation_timestamp ||
-            previous_snapshot.timestamp < claimant.last_claim
+            previous_snapshot.timestamp >= locker.creation_timestamp 
+            || previous_snapshot.timestamp <= claimant.last_claim
     )]
     pub previous_snapshot: Box<Account<'info, Snapshot>>,
 
@@ -79,8 +88,8 @@ pub struct CollectFees<'info> {
         bump = current_snapshot.bump,
         has_one = mint,
         constraint = 
-            current_snapshot.index == previous_snapshot.index + 1 &&
             current_snapshot.timestamp > claimant.last_claim
+            && current_snapshot.index == previous_snapshot.index + 1
     )]
     pub current_snapshot: Box<Account<'info, Snapshot>>,
 
@@ -101,7 +110,17 @@ pub struct CollectFees<'info> {
     pub ouroboros_account: Box<Account<'info, TokenAccount>>,
 
     /// The account claiming the fees
+    #[account(mut)]
     pub holder: Signer<'info>,
+
+    /// The account that will receive the fees
+    #[account(
+        init_if_needed,
+        payer = holder,
+        associated_token::mint = mint,
+        associated_token::authority = holder,
+    )]
+    pub holder_account: Box<Account<'info, TokenAccount>>,
 
     /// The account tracking locker's claims
     #[account(
@@ -116,15 +135,6 @@ pub struct CollectFees<'info> {
         bump = bump
     )]
     pub claimant: Box<Account<'info, Claimant>>,
-
-    /// The account that will receive the fees
-    #[account(
-        init_if_needed,
-        payer = holder,
-        associated_token::mint = mint,
-        associated_token::authority = holder,
-    )]
-    pub holder_account: Box<Account<'info, TokenAccount>>,
 
     #[account(address = associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -177,7 +187,17 @@ pub fn handler(ctx: Context<CollectFees>, bump: u8) -> ProgramResult {
         }
     };
 
-    token::transfer(ctx.accounts.transfer_context(), collectible_rewards)?;
+    let asset = &ctx.accounts.asset;
+    let id_seed = ouroboros.id.to_le_bytes();
+    let mint = asset.mint.key();
+    let seeds = &[
+        b"asset_authority",
+        id_seed.as_ref(),
+        mint.as_ref(),
+        &[asset.bumps.authority],
+    ];
+    let signer = &[&seeds[..]];
+    token::transfer(ctx.accounts.transfer_context().with_signer(signer), collectible_rewards)?;
 
     msg!(
         "Sent {} fees of {} to {}",

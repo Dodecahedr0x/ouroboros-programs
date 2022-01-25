@@ -1,30 +1,15 @@
 import { expect } from "chai";
-import {
-  setProvider,
-  Provider,
-  Program,
-  workspace,
-  BN,
-} from "@project-serum/anchor";
-import {
-  PublicKey,
-  Keypair,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-} from "@solana/web3.js";
-import { Ouroboros } from "../../../target/types/ouroboros";
+import { setProvider, Provider, BN, Wallet } from "@project-serum/anchor";
+import { Keypair } from "@solana/web3.js";
 import { airdropUsers } from "../../helpers";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { Ouroboros } from "../../../ts/ouroboros";
 
 export const testInitializeOuroboros = (provider: Provider) =>
   describe("Initializing the lottery", () => {
     setProvider(provider);
 
-    const program = workspace.Ouroboros as Program<Ouroboros>;
+    let ouroboros: Ouroboros;
 
     let creator: Keypair;
     let id = new BN(Math.round(Math.random() * 100000));
@@ -34,71 +19,31 @@ export const testInitializeOuroboros = (provider: Provider) =>
     const expansionFactor = new BN(10000);
     const timeMultiplier = new BN(10000);
 
-
     before(async () => {
       creator = Keypair.generate();
       await airdropUsers([creator], provider);
+
+      ouroboros = new Ouroboros(
+        new Provider(provider.connection, new Wallet(creator), {}),
+        id,
+        rewardPeriod,
+        expansionFactor,
+        timeMultiplier
+      );
     });
 
     it("Initializes an Ouroboros", async () => {
-      const [ouroborosAddress, ouroborosBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("ouroboros"), id.toBuffer("le", 8)],
-          program.programId
-        );
-      const [authorityAddress, authorityBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("authority"), id.toBuffer("le", 8)],
-          program.programId
-        );
-      const [mintAddress, mintBump] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("mint"), id.toBuffer("le", 8)],
-          program.programId
-        );
+      await ouroboros.initialize(creator.publicKey, initialSupply, startDate);
 
-      const bumps = {
-        ouroboros: ouroborosBump,
-        authority: authorityBump,
-        mint: mintBump,
-      };
-
-      const creatorAccount = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mintAddress,
-        creator.publicKey
+      const o = await ouroboros.program.account.ouroboros.fetch(
+        ouroboros.addresses.ouroboros
       );
-
-      await program.rpc.initializeOuroboros(
-        bumps,
-        id,
-        initialSupply,
-        rewardPeriod,
-        startDate,
-        expansionFactor,
-        timeMultiplier,
-        {
-          accounts: {
-            ouroboros: ouroborosAddress,
-            authority: authorityAddress,
-            mint: mintAddress,
-            creator: creator.publicKey,
-            creatorAccount: creatorAccount,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            rent: SYSVAR_RENT_PUBKEY,
-            systemProgram: SystemProgram.programId,
-          },
-          signers: [creator],
-        }
-      );
-
-      const o = await program.account.ouroboros.fetch(ouroborosAddress);
 
       expect(o.id.toString()).to.equal(id.toString());
-      expect(o.authority.toString()).to.equal(authorityAddress.toString());
-      expect(o.mint.toString()).to.equal(mintAddress.toString());
+      expect(o.authority.toString()).to.equal(
+        ouroboros.addresses.authority.toString()
+      );
+      expect(o.mint.toString()).to.equal(ouroboros.addresses.mint.toString());
       expect(o.period.toString()).to.equal(rewardPeriod.toString());
       expect(o.lastPeriod.toString()).to.equal(startDate.toString());
       expect(o.expansionFactor.toString()).to.equal(expansionFactor.toString());
@@ -106,7 +51,7 @@ export const testInitializeOuroboros = (provider: Provider) =>
 
       const nativeMint = new Token(
         provider.connection,
-        mintAddress,
+        ouroboros.addresses.mint,
         TOKEN_PROGRAM_ID,
         creator
       );

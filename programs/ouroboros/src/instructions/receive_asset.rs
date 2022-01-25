@@ -144,11 +144,6 @@ pub fn handler(
         asset.bumps = bumps;
     }
 
-    if asset.last_update + (ouroboros.period as i64) < ctx.accounts.clock.unix_timestamp {
-        asset.last_update += ouroboros.period as i64;
-        asset.last_snapshot_index += 1;
-    }
-
     let current_snapshot = &mut ctx.accounts.current_snapshot;
 
     // Uninitialized snapshot
@@ -161,6 +156,11 @@ pub fn handler(
         || current_snapshot.index != snapshot_index
     {
         return Err(ErrorCode::InvalidSnapshot.into());
+    }
+
+    if asset.last_update + (ouroboros.period as i64) < ctx.accounts.clock.unix_timestamp {
+        asset.last_update += ouroboros.period as i64;
+        asset.last_snapshot_index += 1;
     }
 
     current_snapshot.rewards += amount;
